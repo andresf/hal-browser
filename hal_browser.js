@@ -7,11 +7,19 @@
 
   HAL.client = function(opts) {
     this.vent = opts.vent;
+    this.headers = HAL.parseHeaders($('#request-headers').val());
     this.get = function(url) {
       var self = this;
       this.vent.trigger('location-change', { url: url });
-      var jqxhr = $.getJSON(url, function(resource) {
-        self.vent.trigger('response', { resource: resource });
+      var jqxhr = $.ajax({
+        url: url,
+        dataType: 'json',
+        headers: this.headers,
+        success: function(resource, textStatus, jqXHR) {
+          self.vent.trigger('response', { 
+            resource: resource,
+            headers: jqXHR.getAllResponseHeaders() });
+        }
       }).error(function() {
         self.vent.trigger('fail-response', { jqxhr: jqxhr });
       });
@@ -302,17 +310,7 @@
     },
 
     headers: function() {
-      var header_lines = this.$('.headers').val().split("\n");
-      var headers = {};
-      _.each(header_lines, function(line) {
-        var parts = line.split(':');
-        if (parts.length > 1) {
-          var name = parts.shift().trim();
-          var value = parts.join(':').trim();
-          headers[name] = value;
-        }
-      });
-      return headers;
+      return HAL.parseHeaders(this.$('.headers').val());
     },
 
     submitQuery: function(e) {
@@ -339,7 +337,7 @@
     },
 
     render: function() {
-      this.$el.html(this.template({ href: this.href }));
+      this.$el.html(this.template({ href: this.href, user_defined_headers: $('#request-headers').val() }));
       return this;
     },
 
@@ -368,6 +366,20 @@
     } else {
       return rel;
     }
+  };
+
+  HAL.parseHeaders = function(string) {
+    var header_lines = string.split("\n");
+    var headers = {};
+    _.each(header_lines, function(line) {
+      var parts = line.split(':');
+      if (parts.length == 2) {
+        var name = parts[0].trim();
+        var value = parts[1].trim();
+        headers[name] = value;
+      }
+    });
+    return headers;
   };
 
   window.HAL = HAL;
