@@ -319,14 +319,10 @@
       'submit form': 'submitQuery'
     },
 
-    headers: function() {
-      return HAL.parseHeaders(this.$('.headers').val());
-    },
-
     submitQuery: function(e) {
       e.preventDefault();
       var self = this;
-      var headers = this.headers();
+      var headers = HAL.parseHeaders(this.$('.headers').val());
       var method = this.$('.method').val();
       var body = this.$('.body').val();
       var jqxhr = $.ajax({
